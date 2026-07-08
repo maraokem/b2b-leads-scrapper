@@ -1,6 +1,7 @@
 #python code to run a headful browser using playwright (async version)
 #this code semi automates the process of leads extraction from europages.co.uk
 from playwright.async_api import async_playwright
+from datetime import datetime
 import lib.pagebrowser as pagebrowser
 import asyncio
 import re
@@ -11,8 +12,14 @@ ALL_PAGES = []
 ALL_WEBSITES = []
 ALL_EMAILS = []
 CURRENT_PAGE = 1
+FILENAME = ""
 BASE_URL = "https://europages.co.uk"  # Replace with the actual base URL of the site you want to scrape
 
+#function to create txt file and write the found emails to it
+def save_emails_to_file(emails, filename="found_emails.txt", mode="a"):
+    with open(filename, mode) as f:
+        for email in emails:
+            f.write(f"{email}\n")
 
 #function to get company pages from the search results page
 async def getCompanyPages(page):
@@ -28,6 +35,7 @@ async def getCompanyPages(page):
             company_links.append(BASE_URL+href)
     ALL_PAGES.extend(company_links)
     return company_links
+
 
 #function to process each company page and visit the website link if available
 async def processPages(context, companyPages):
@@ -48,6 +56,7 @@ async def processPages(context, companyPages):
                     print("Visiting company website to extract emails...")
                     emails = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
                     ALL_EMAILS.extend(emails)
+                    save_emails_to_file(emails, FILENAME)  # Save the found emails to the file
                     print(f"Found emails: {emails}")
                     
             else:
@@ -82,6 +91,7 @@ async def visitCompanyWebsite(context, websiteLink):
 
 async def main():
     global CURRENT_PAGE
+    global FILENAME
     async with async_playwright() as p:
         global SEARCH_QUERY
         browser = await p.chromium.launch(
@@ -103,6 +113,7 @@ async def main():
             SEARCH_QUERY = searchQuery.strip()
         await searchBox.fill(SEARCH_QUERY)
         await searchBox.press("Enter")
+        FILENAME = f"found_emails_{SEARCH_QUERY.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         await page.locator('div[data-test="company"]').first.wait_for()
         # check if accept cookies button is present and click it
         acceptCookiesButton = page.locator('div[id="cookiescript_accept"]')
