@@ -4,9 +4,8 @@ from playwright.async_api import async_playwright
 from datetime import datetime
 import lib.pagebrowser as pagebrowser
 import asyncio
-import re
 
-
+# -- Define global variables ---
 SEARCH_QUERY = "cnc machines"
 ALL_PAGES = []
 ALL_WEBSITES = []
