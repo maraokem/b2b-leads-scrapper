@@ -103,10 +103,20 @@ async def main():
         await page.wait_for_load_state("networkidle")
         print("Page title:", await page.title())
         print("Page URL:", page.url)
-        #page.pause()
-        searchBox = page.locator("input[name='q']")
-        print("Search box found...")
-        # little delay to see the search box
+        
+        # -- Wait till captcha is solved
+        await page.wait_for_selector("body.cookiescript_overlay", timeout=60000)
+        await page.wait_for_timeout(1000) # little delay
+
+        # -- check if accept cookies button is present and click it
+        acceptCookiesButton = page.locator('div[id="cookiescript_accept"]')
+        if await acceptCookiesButton.count() > 0:
+            print("Accept cookies button found. Clicking it...")
+            await acceptCookiesButton.first.click()
+            await page.wait_for_timeout(1000)  # Wait for a second after clicking accept cookies
+        
+        # -- Locate the search query input
+        searchBox = page.locator('[name="q"]')
         searchQuery = input(f"Enter search query (default: {SEARCH_QUERY}): ")
         if searchQuery.strip():
             SEARCH_QUERY = searchQuery.strip()
@@ -121,7 +131,7 @@ async def main():
             await acceptCookiesButton.first.click()
             await page.wait_for_timeout(1000)  # Wait for a second after clicking accept cookies
 
-        while CURRENT_PAGE < 10:
+        while CURRENT_PAGE < 101:
             #check if the search results page has loaded correctly by checking the title of the page
             title = await page.title()
             if SEARCH_QUERY.lower() in title.lower():
@@ -129,15 +139,18 @@ async def main():
                 await processPages(context, companyPages)
                 print(f"Finished processing page {CURRENT_PAGE}.")
                 await scrollPage(page)
-                #click the next page button
-                nextPageLink = page.locator('a[data-test="pagination-next"]')
-                if await nextPageLink.count() > 0:
-                    await nextPageLink.first.click()
-                    await page.locator('div[data-test="company"]').first.wait_for()
-                    CURRENT_PAGE += 1
-                else:
-                    print("No more pages to process.")
-                    break
+                try:
+                    #click the next page button
+                    nextPageLink = page.locator('a[data-test="pagination-next"]')
+                    if await nextPageLink.count() > 0:
+                        await nextPageLink.first.click()
+                        await page.locator('div[data-test="company"]').first.wait_for()
+                        CURRENT_PAGE += 1
+                    else:
+                        print("No more pages to process.")
+                        break
+                except Exception as e:
+                    print("Error moving to next page")
             else:
                 print("No results found or invalid page loaded.")
                 break
