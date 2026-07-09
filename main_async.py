@@ -3,7 +3,9 @@
 from playwright.async_api import async_playwright
 from datetime import datetime
 import lib.pagebrowser as pagebrowser
+from urllib.parse import urlparse, urlunparse
 import asyncio
+
 
 # -- Define global variables ---
 SEARCH_QUERY = "cnc machines"
@@ -20,7 +22,7 @@ def save_emails_to_file(emails, filename="found_emails.txt", mode="a"):
         for email in emails:
             f.write(f"{email}\n")
 
-#function to get company pages from the search results page
+# -- function to get company pages from the search results page --
 async def getCompanyPages(page):
     # Implementation for getting company pages from the search results page
     links = page.locator("a.company-name-link")
@@ -36,7 +38,7 @@ async def getCompanyPages(page):
     return company_links
 
 
-#function to process each company page and visit the website link if available
+# -- function to process each company page and visit the website link if available --
 async def processPages(context, companyPages):
     for link in companyPages:
         page2 = None
@@ -65,6 +67,16 @@ async def processPages(context, companyPages):
         finally:
             if page2:
                 await page2.close()
+
+# -- fuction to rewrite url to move the next page --
+def gotoPage(current_url: str, page: int):
+    parsed = urlparse(current_url)
+    new_path = ""
+    if CURRENT_PAGE == 1:
+        new_path =  parsed.path.replace("/search", f"/search/page/{str(page)}")
+    else:
+        new_path = parsed.path.replace(f"/page/{str(CURRENT_PAGE)}", f"/page/{str(page)}")
+    return urlunparse(parsed._replace(path=new_path))
 
 # function to scroll the page dynamically until the next page button is found or a maximum number of scrolls is reached
 async def scrollPage(page, scrolls=12):
@@ -147,10 +159,23 @@ async def main():
                         await page.locator('div[data-test="company"]').first.wait_for()
                         CURRENT_PAGE += 1
                     else:
-                        print("No more pages to process.")
-                        break
+                        # -- Force url pagination --
+                        nPage = CURRENT_PAGE + 1
+                        print("forcing url pagination...")
+                        nextPageLink = gotoPage(page.url, nPage)
+                        print(nextPageLink)
+                        await page.goto(nextPageLink)
+                        await page.locator('div[data-test="company"]').first.wait_for()
+                        CURRENT_PAGE += 1
+                        
                 except Exception as e:
-                    print("Error moving to next page")
+                    print("Pagination error, forcing url pagination...")
+                    nPage = CURRENT_PAGE + 1
+                    nextPageLink = gotoPage(page.url, nPage)
+                    print(nextPageLink)
+                    await page.goto(nextPageLink)
+                    await page.locator('div[data-test="company"]').first.wait_for()
+                    CURRENT_PAGE += 1
             else:
                 print("No results found or invalid page loaded.")
                 break
