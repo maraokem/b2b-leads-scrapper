@@ -1,5 +1,5 @@
 #python code to run a headful browser using playwright
-#this code semi automates the process of extraction from europages only.
+#this code semi automates the process of leads extraction
 from playwright.sync_api import sync_playwright
 import asyncio
 import re
@@ -9,7 +9,7 @@ SEARCH_QUERY = "cnc machines"
 ALL_PAGES = []
 ALL_WEBSITES = []
 CURRENT_PAGE = 1
-BASE_URL = "https://europages.co.uk"
+BASE_URL = "https://europages.co.uk"  # Replace with the actual base URL of the site you want to scrape
 EMAIL_RE = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 CF_RE = re.compile(r'data-cfemail="([a-f0-9]+)"')
 
