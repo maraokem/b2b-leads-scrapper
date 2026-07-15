@@ -135,7 +135,7 @@ async def main():
         await searchBox.fill(SEARCH_QUERY)
         await searchBox.press("Enter")
         FILENAME = f"found_emails_{SEARCH_QUERY.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        await page.locator('div[data-test="company"]').first.wait_for()
+        await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
         # check if accept cookies button is present and click it
         acceptCookiesButton = page.locator('div[id="cookiescript_accept"]')
         if await acceptCookiesButton.count() > 0:
@@ -156,7 +156,7 @@ async def main():
                     nextPageLink = page.locator('a[data-test="pagination-next"]')
                     if await nextPageLink.count() > 0:
                         await nextPageLink.first.click()
-                        await page.locator('div[data-test="company"]').first.wait_for()
+                        await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
                         CURRENT_PAGE += 1
                     else:
                         # -- Force url pagination --
@@ -165,7 +165,7 @@ async def main():
                         nextPageLink = gotoPage(page.url, nPage)
                         print(nextPageLink)
                         await page.goto(nextPageLink)
-                        await page.locator('div[data-test="company"]').first.wait_for()
+                        await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
                         CURRENT_PAGE += 1
                         
                 except Exception as e:
@@ -174,7 +174,7 @@ async def main():
                     nextPageLink = gotoPage(page.url, nPage)
                     print(nextPageLink)
                     await page.goto(nextPageLink)
-                    await page.locator('div[data-test="company"]').first.wait_for()
+                    await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
                     CURRENT_PAGE += 1
             else:
                 print("No results found or invalid page loaded.")
