@@ -2,13 +2,15 @@
 #this code semi automates the process of leads extraction from europages.co.uk
 from playwright.async_api import async_playwright
 from datetime import datetime
+from lib.pagebrowser import POST_URL
 import lib.pagebrowser as pagebrowser
 from urllib.parse import urlparse, urlunparse
 import asyncio
+import requests
 
 
 # -- Define global variables ---
-SEARCH_QUERY = "cnc machines"
+SEARCH_QUERY = ""
 ALL_PAGES = []
 ALL_WEBSITES = []
 ALL_EMAILS = []
@@ -37,6 +39,22 @@ async def getCompanyPages(page):
     ALL_PAGES.extend(company_links)
     return company_links
 
+# -- function to push leads to the API endpoint --
+def push_leads_to_api(leads, source):
+    payload = {
+        "leads": leads,
+        "source": source,
+        "keywords": SEARCH_QUERY
+    }
+    try:
+        response = requests.post(POST_URL, json=payload)
+        if response.status_code == 201:
+            print(f"Successfully pushed {len(leads)} leads to the API.")
+        else:
+            print(f"Failed to push leads. Status code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        print(f"Error occurred while pushing leads to the API: {e}")
+
 
 # -- function to process each company page and visit the website link if available --
 async def processPages(context, companyPages):
@@ -56,8 +74,11 @@ async def processPages(context, companyPages):
                     ALL_WEBSITES.append(websiteHref)
                     print("Visiting company website to extract emails...")
                     emails = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
-                    ALL_EMAILS.extend(emails)
-                    save_emails_to_file(emails, FILENAME)  # Save the found emails to the file
+                    if emails:
+                        push_leads_to_api(emails, websiteHref)  # Push the found emails to the API
+                        # Note: SEARCH_QUERY is used internally in push_leads_to_api
+                        ALL_EMAILS.extend(emails)
+                        save_emails_to_file(emails, FILENAME)  # Save the found emails to the file
                     print(f"Found emails: {emails}")
                     
             else:

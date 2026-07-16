@@ -27,6 +27,7 @@ from bs4 import BeautifulSoup
 from playwright.async_api import Page, BrowserContext, TimeoutError as PlaywrightTimeoutError
 import lib.extract as extract
 
+POST_URL = "https://boothx.mdpa.com.mx/leads/api/v1/push"
 CONTACT_KEYWORDS = [
     # English
     "contact", "contact us", "contact-us", "get in touch", "reach us",
