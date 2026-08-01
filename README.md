@@ -66,12 +66,6 @@ found_emails_copper_20260721_053920.txt
 
 ## Configuration
 
-The API endpoint for pushing leads is defined in `lib/pagebrowser.py`:
-
-```python
-POST_URL = "https://boothx.mdpa.com.mx/leads/api/v1/push"
-```
-
 Update `SEARCH_QUERY` and `BASE_URL` at the top of each scraper script to target a different category or region.
 
 ## Output Format
