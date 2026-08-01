@@ -138,7 +138,7 @@ async def main():
         print("Page URL:", page.url)
         
         # -- Wait till captcha is solved
-        await page.wait_for_selector("body.cookiescript_overlay", timeout=60000)
+        await page.wait_for_selector(".cookiescript_overlay", timeout=60000)
         await page.wait_for_timeout(1000) # little delay
 
         # -- check if accept cookies button is present and click it
