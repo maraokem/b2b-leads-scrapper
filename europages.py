@@ -40,11 +40,14 @@ async def getCompanyPages(page):
     return company_links
 
 # -- function to push leads to the API endpoint --
-def push_leads_to_api(leads, source):
+def push_leads_to_api(leads, source, companyName = "", country = "", address = "", categories = ""):
     payload = {
         "leads": leads,
         "source": source,
-        "keywords": SEARCH_QUERY
+        "keywords": f"{SEARCH_QUERY} {categories}",
+        "companyName": companyName,
+        "country": country,
+        "address": address,
     }
     try:
         response = requests.post(POST_URL, json=payload)
@@ -67,6 +70,14 @@ async def processPages(context, companyPages):
             print(f"Visiting company page: {link}")
             #check if the company page has a website link
             websiteLink = page2.locator("a.text-primary-120")
+            companyName = await page2.locator('h1[data-test="company-display-title"]').first.text_content()
+            country = await page2.locator('div[data-test="company-country"] span.text-neutral-100').first.text_content()
+            address = await page2.locator('div[data-test="company-address"]').first.text_content()
+            allcategories = await page2.locator(
+                '[data-test="product-category-pill"]'
+            ).all_text_contents()
+            categories = " ".join(text.strip() for text in allcategories)
+            print(f"Company Name: {companyName}, Country: {country}, Address: {address}")
             if await websiteLink.count() > 0:
                 websiteHref = await websiteLink.first.get_attribute("href")
                 if websiteHref and websiteHref not in ALL_WEBSITES:
@@ -75,7 +86,7 @@ async def processPages(context, companyPages):
                     print("Visiting company website to extract emails...")
                     emails = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
                     if emails:
-                        push_leads_to_api(emails, websiteHref)  # Push the found emails to the API
+                        push_leads_to_api(emails, websiteHref, companyName, country, address, categories)  # Push the found emails to the API
                         # Note: SEARCH_QUERY is used internally in push_leads_to_api
                         ALL_EMAILS.extend(emails)
                         save_emails_to_file(emails, FILENAME)  # Save the found emails to the file
@@ -122,6 +133,14 @@ async def visitCompanyWebsite(context, websiteLink):
 
 
 async def main():
+    print(r"""
+██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗      ██╗  ██╗
+██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║      ╚██╗██╔╝
+██████╔╝██║   ██║██║   ██║   ██║   ███████║█████╗ ╚███╔╝
+██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║╚════╝ ██╔██╗
+██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║      ██╔╝ ██╗
+╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝      ╚═╝  ╚═╝
+""")
     global CURRENT_PAGE
     global FILENAME
     async with async_playwright() as p:
