@@ -27,7 +27,7 @@ def save_emails_to_file(emails, filename="found_emails.txt", mode="a"):
 # -- function to get company pages from the search results page --
 async def getCompanyPages(page):
     # Implementation for getting company pages from the search results page
-    links = page.locator("a.company-name")
+    links = page.locator("a.compnay-name.J-compnay-name")
     count = await links.count()
     print(f"Found {count} company links on the search results page.")
     company_links = []
@@ -62,13 +62,23 @@ async def processPages(context, companyPages):
         page2 = None
         try:
             page2 = await context.new_page()
-            await page2.goto(link)
-            await page2.locator("div.vis-card").first.wait_for()
+            await page2.goto(f"{link}/contact-info.html", wait_until="domcontentloaded", timeout=60000)
+            await page2.locator("div.title-txt").first.wait_for()
             print(f"Visiting company page: {link}")
             #check if the company page has a website link
-            websiteLink = page2.locator("a.text-primary-120")
+            websiteLink = page2.locator("a.link-web")
+            companyName = (await page2.locator(".title-txt h1").first.inner_text()).strip()
+            country = (await page2.locator(".detail-address").inner_text()).strip()
+            address = (await page2.locator(".info-item:has(.info-label:text('Address:')) .info-fields").first.inner_text()).strip()
+            allCategories = await page2.locator(
+                ".info-item:has(.info-label:text('Main Products:')) "
+                ".J-searchProdsByKeyWord"
+            ).all_inner_texts()
+            allCategories = ", ".join(p.strip() for p in allCategories)
+            print(f"Company Name: {companyName} \n Country: {country} \n Address: {address} \n Categories: {allCategories}")
             if await websiteLink.count() > 0:
                 websiteHref = await websiteLink.first.get_attribute("href")
+                websiteHref = "https:" + websiteHref
                 if websiteHref and websiteHref not in ALL_WEBSITES:
                     print(f"Found website link: {websiteHref}")
                     ALL_WEBSITES.append(websiteHref)
@@ -84,6 +94,9 @@ async def processPages(context, companyPages):
             else:
                 print("No website link found on this company page.")
         except Exception as e:
+            print(f"ERROR processing {link}: {e}")
+            import traceback
+            traceback.print_exc()
             continue  # skip to the next company page if there's an error
         finally:
             if page2:
@@ -170,13 +183,20 @@ async def main():
         # -- Wait for the search results to load
         await page.locator('div.prod-list').first.wait_for(timeout=60000)
         
+        title = await page.title()
 
-        while CURRENT_PAGE < 101:
+        while CURRENT_PAGE < 2:
             #check if the search results page has loaded correctly by checking the title of the page
-            title = page.title()
             if SEARCH_QUERY.lower() in title.lower():
+                # screenshot the full page for debugging purposes
+                #await page.screenshot(path=f"debug_page_{CURRENT_PAGE}.png", full_page=True)
+                # save page source for debugging purposes
+                #page_source = await page.content()
+                #with open(f"debug_page_{CURRENT_PAGE}.html", "w", encoding="utf-8") as f:
+                #    f.write(page_source)
+
                 companyPages = await getCompanyPages(page)
-                # await processPages(context, companyPages)
+                await processPages(context, companyPages)
                 print(f"Finished processing page {CURRENT_PAGE}.")
                 #await scrollPage(page)
                 try:
