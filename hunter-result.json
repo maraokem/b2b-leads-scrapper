@@ -1,0 +1,253 @@
+{
+  "data": {
+    "domain": "nipovalve.com",
+    "disposable": false,
+    "webmail": false,
+    "accept_all": false,
+    "pattern": "{first}",
+    "organization": "Zhejiang Naibang Valve CO",
+    "linked_domains": [],
+    "emails": [
+      {
+        "value": "lily@nipovalve.com",
+        "type": "personal",
+        "source_type": "found",
+        "confidence": 90,
+        "sources": [
+          {
+            "domain": "slideshare.net",
+            "uri": "https://slideshare.net/ssuser700cf8/20141-33783473",
+            "extracted_on": "2015-02-01",
+            "last_seen_on": "2025-10-29",
+            "still_on_page": true
+          }
+        ],
+        "first_name": "Lily",
+        "last_name": "Liang",
+        "position": null,
+        "position_raw": null,
+        "seniority": null,
+        "department": null,
+        "decision_maker": null,
+        "linkedin": null,
+        "twitter": null,
+        "phone_number": null,
+        "verification": {
+          "date": null,
+          "status": null
+        }
+      },
+      {
+        "value": "sale@nipovalve.com",
+        "type": "generic",
+        "source_type": "found",
+        "confidence": 82,
+        "sources": [
+          {
+            "domain": "pt.nipovalves.com",
+            "uri": "https://pt.nipovalves.com/Supressor-de-chamas-de-deflagra%C3%A7%C3%A3o-tipo-gaveta-pl43186486.html",
+            "extracted_on": "2026-08-04",
+            "last_seen_on": "2026-08-04",
+            "still_on_page": true
+          },
+          {
+            "domain": "pt.nipovalves.com",
+            "uri": "https://pt.nipovalves.com/faqlist.html",
+            "extracted_on": "2026-08-04",
+            "last_seen_on": "2026-08-04",
+            "still_on_page": true
+          },
+          {
+            "domain": "pt.nipovalves.com",
+            "uri": "https://pt.nipovalves.com/keyword-index.html",
+            "extracted_on": "2026-08-04",
+            "last_seen_on": "2026-08-04",
+            "still_on_page": true
+          },
+          {
+            "domain": "es.nipovalves.com",
+            "uri": "https://es.nipovalves.com/V%C3%A1lvulas-de-globo-de-fuelle-de-acero-inoxidable-con-bridas-integralmente-forjadas-pd166654538.html",
+            "extracted_on": "2026-08-01",
+            "last_seen_on": "2026-08-01",
+            "still_on_page": true
+          },
+          {
+            "domain": "es.nipovalves.com",
+            "uri": "https://es.nipovalves.com/%C2%BFCu%C3%A1l-es-el-prop%C3%B3sito-de-la-v%C3%A1lvula-de-retenci%C3%B3n-id44550265.html",
+            "extracted_on": "2026-05-16",
+            "last_seen_on": "2026-08-01",
+            "still_on_page": true
+          },
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com/Drawer-Type-Deflagration-Quick-Open-Flame-Arrestor-pd582063448.html",
+            "extracted_on": "2026-07-23",
+            "last_seen_on": "2026-07-23",
+            "still_on_page": true
+          },
+          {
+            "domain": "es.nipovalves.com",
+            "uri": "https://es.nipovalves.com/%C2%BFCu%C3%A1l-es-la-diferencia-entre-una-v%C3%A1lvula-de-globo-y-una-v%C3%A1lvula-de-compuerta-id41782455.html",
+            "extracted_on": "2026-06-18",
+            "last_seen_on": "2026-06-18",
+            "still_on_page": true
+          },
+          {
+            "domain": "es.nipovalves.com",
+            "uri": "https://es.nipovalves.com/%C2%BFC%C3%B3mo-funciona-una-v%C3%A1lvula-de-globo-id44782455.html",
+            "extracted_on": "2026-06-18",
+            "last_seen_on": "2026-06-18",
+            "still_on_page": true
+          },
+          {
+            "domain": "es.nipovalves.com",
+            "uri": "https://es.nipovalves.com/%C2%BFPara-qu%C3%A9-se-utiliza-una-v%C3%A1lvula-de-globo-id42782455.html",
+            "extracted_on": "2026-06-18",
+            "last_seen_on": "2026-06-18",
+            "still_on_page": true
+          },
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com/The-Complete-Diaphragm-Valve-Guide-for-Chemical-Processing-id43639875.html",
+            "extracted_on": "2026-06-16",
+            "last_seen_on": "2026-06-16",
+            "still_on_page": true
+          },
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com/industries.html",
+            "extracted_on": "2025-11-25",
+            "last_seen_on": "2026-05-25",
+            "still_on_page": true
+          },
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com",
+            "extracted_on": "2025-11-25",
+            "last_seen_on": "2025-11-25",
+            "still_on_page": false
+          }
+        ],
+        "first_name": null,
+        "last_name": null,
+        "position": null,
+        "position_raw": null,
+        "seniority": null,
+        "department": "sales",
+        "decision_maker": null,
+        "linkedin": null,
+        "twitter": null,
+        "phone_number": null,
+        "verification": {
+          "date": null,
+          "status": null
+        }
+      },
+      {
+        "value": "nipo@nipovalve.com",
+        "type": "personal",
+        "source_type": "found",
+        "confidence": 82,
+        "sources": [
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com/Drawer-Type-Deflagration-Quick-Open-Flame-Arrestor-pd582063448.html",
+            "extracted_on": "2026-07-23",
+            "last_seen_on": "2026-07-23",
+            "still_on_page": true
+          },
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com/The-Complete-Diaphragm-Valve-Guide-for-Chemical-Processing-id43639875.html",
+            "extracted_on": "2026-06-16",
+            "last_seen_on": "2026-06-16",
+            "still_on_page": true
+          },
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com/industries.html",
+            "extracted_on": "2026-02-25",
+            "last_seen_on": "2026-05-25",
+            "still_on_page": true
+          },
+          {
+            "domain": "nipovalves.com",
+            "uri": "https://nipovalves.com",
+            "extracted_on": "2025-11-25",
+            "last_seen_on": "2025-11-25",
+            "still_on_page": false
+          },
+          {
+            "domain": "nipovalve.com",
+            "uri": "https://nipovalve.com",
+            "extracted_on": "2023-11-06",
+            "last_seen_on": "2025-09-11",
+            "still_on_page": false
+          },
+          {
+            "domain": "nipovalve.com",
+            "uri": "https://nipovalve.com/aboutus.html",
+            "extracted_on": "2024-11-20",
+            "last_seen_on": "2025-09-11",
+            "still_on_page": false
+          },
+          {
+            "domain": "nipovalve.com",
+            "uri": "https://nipovalve.com/aboutus/aboutus.html",
+            "extracted_on": "2024-11-20",
+            "last_seen_on": "2025-09-11",
+            "still_on_page": false
+          },
+          {
+            "domain": "nipovalve.com",
+            "uri": "https://nipovalve.com/ch",
+            "extracted_on": "2023-08-06",
+            "last_seen_on": "2025-09-11",
+            "still_on_page": false
+          },
+          {
+            "domain": "nipovalve.com",
+            "uri": "https://nipovalve.com/contactus.html",
+            "extracted_on": "2024-11-20",
+            "last_seen_on": "2025-09-11",
+            "still_on_page": false
+          },
+          {
+            "domain": "talkcome.com",
+            "uri": "https://talkcome.com/productshow/ccid=2671-sortid=3.html",
+            "extracted_on": "2024-05-05",
+            "last_seen_on": "2024-11-11",
+            "still_on_page": false
+          }
+        ],
+        "first_name": null,
+        "last_name": null,
+        "position": null,
+        "position_raw": null,
+        "seniority": null,
+        "department": null,
+        "decision_maker": null,
+        "linkedin": null,
+        "twitter": null,
+        "phone_number": null,
+        "verification": {
+          "date": null,
+          "status": null
+        }
+      }
+    ]
+  },
+  "meta": {
+    "results": 3,
+    "limit": 10,
+    "offset": 0,
+    "params": {
+      "domain": null,
+      "company": "Zhejiang Naibang Valve Co., Ltd.",
+      "type": null,
+      "seniority": null,
+      "department": null,
+      "decision_maker": null
+    }
+  }
+}

@@ -40,11 +40,14 @@ async def getCompanyPages(page):
     return company_links
 
 # -- function to push leads to the API endpoint --
-def push_leads_to_api(leads, source):
+def push_leads_to_api(leads, source, companyName = "", country = "", address = "", categories = ""):
     payload = {
         "leads": leads,
         "source": source,
-        "keywords": SEARCH_QUERY
+        "keywords": f"{SEARCH_QUERY} {categories}",
+        "companyName": companyName,
+        "country": country,
+        "address": address,
     }
     try:
         response = requests.post(POST_URL, json=payload)
@@ -55,6 +58,21 @@ def push_leads_to_api(leads, source):
     except Exception as e:
         print(f"Error occurred while pushing leads to the API: {e}")
 
+# -- function to find company domain using Hunter.io API --
+def find_company_domain(company_name):
+    url = "https://api.hunter.io/v2/domain-search"
+
+    params = {
+        "company": company_name,
+        "api_key": "023ac9f825718f69cf6499ab59835687037a61a30e0d3f1c7a2b8e6"  # Replace with your actual Hunter.io API key
+    }
+
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data
 
 # -- function to process each company page and visit the website link if available --
 async def processPages(context, companyPages):
@@ -74,8 +92,8 @@ async def processPages(context, companyPages):
                 ".info-item:has(.info-label:text('Main Products:')) "
                 ".J-searchProdsByKeyWord"
             ).all_inner_texts()
-            allCategories = ", ".join(p.strip() for p in allCategories)
-            print(f"Company Name: {companyName} \n Country: {country} \n Address: {address} \n Categories: {allCategories}")
+            categories = ", ".join(p.strip() for p in allCategories)
+            print(f"Company Name: {companyName} \n Country: {country} \n Address: {address} \n Categories: {categories}")
             if await websiteLink.count() > 0:
                 websiteHref = await websiteLink.first.get_attribute("href")
                 websiteHref = "https:" + websiteHref
@@ -83,16 +101,23 @@ async def processPages(context, companyPages):
                     print(f"Found website link: {websiteHref}")
                     ALL_WEBSITES.append(websiteHref)
                     print("Visiting company website to extract emails...")
-                    emails = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
-                    if emails:
-                        push_leads_to_api(emails, websiteHref)  # Push the found emails to the API
+                    result = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
+                    if result.get("emails"):
+                        emails = result["emails"]
+                        homepage = result.get("homepage")
+                        print(f"Homepage URL: {homepage}")
+                        push_leads_to_api(emails, homepage, companyName, country, address, categories)  # Push the found emails to the API
                         # Note: SEARCH_QUERY is used internally in push_leads_to_api
                         ALL_EMAILS.extend(emails)
                         save_emails_to_file(emails, FILENAME)  # Save the found emails to the file
                     print(f"Found emails: {emails}")
                     
             else:
-                print("No website link found on this company page.")
+                print("No website link found on this company page. Attempting to find company domain using Hunter.io API...")
+                result = find_company_domain(companyName)
+                domain = result.get("data", {}).get("domain")
+                print(f"Hunter.io API response: {result}")
+                
         except Exception as e:
             print(f"ERROR processing {link}: {e}")
             import traceback

@@ -153,13 +153,15 @@ async def open_contact_page(playwright_page: Page, homepage_url: str, timeout_ms
 
 async def ExtractEmailsFromPage(playwright_context: BrowserContext, url: str, timeout: int = 20000):
     foundEmails = []
+    homepage = ""
     seen = set()
     playwright_page = await playwright_context.new_page()
     try:
         await playwright_page.goto(url, wait_until="domcontentloaded", timeout=timeout)
         print(f"Opened page: {url}")
-        await playwright_page.wait_for_timeout(3000)  # wait for 1 second to allow the page to load
+        await playwright_page.wait_for_timeout(3000)  # wait for 3 seconds to allow the page to load
         html = await playwright_page.content()
+        homepage = playwright_page.url
         foundEmails.extend(extract.extractEmails(html))
         foundEmails.extend(extract.extractCloudflareEmails(html))
         seen.update(email.lower() for email in foundEmails)
@@ -174,13 +176,13 @@ async def ExtractEmailsFromPage(playwright_context: BrowserContext, url: str, ti
                 foundEmails.extend(extract.extractEmails(contact_html, initSet=seen))
                 foundEmails.extend(extract.extractCloudflareEmails(contact_html))
         await playwright_page.close()
-        return foundEmails
+        return {"homepage": homepage, "emails": foundEmails}
     except PlaywrightTimeoutError:
         print(f"Timeout while trying to open {url}")
         await playwright_page.close()
-        return foundEmails  # return whatever emails were found before the timeout
+        return {"homepage": homepage, "emails": foundEmails}  # return whatever emails were found before the timeout
     except Exception as e:
         print(f"Error occurred while opening {url}: {e}")
         await playwright_page.close()
-        return foundEmails  # return whatever emails were found before the error
+        return {"homepage": homepage, "emails": foundEmails}  # return whatever emails were found before the error
     
