@@ -161,6 +161,16 @@ async def visitCompanyWebsite(context, websiteLink):
 
 
 async def main():
+
+    print(r"""
+    ██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗      ██╗  ██╗
+    ██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║      ╚██╗██╔╝
+    ██████╔╝██║   ██║██║   ██║   ██║   ███████║█████╗ ╚███╔╝
+    ██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║╚════╝ ██╔██╗
+    ██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║      ██╔╝ ██╗
+    ╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝      ╚═╝  ╚═╝
+    """)
+    
     global CURRENT_PAGE
     global FILENAME
     global NEXT_PAGE
@@ -255,8 +265,8 @@ async def main():
                     #await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
                     #CURRENT_PAGE += 1
                     
-                for page in companyPages:
-                    print(page)
+                for link in companyPages:
+                    print(link)
             else:
                 print("No results found or invalid page loaded.")
                 break
