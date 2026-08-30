@@ -16,6 +16,7 @@ ALL_WEBSITES = []
 ALL_EMAILS = []
 CURRENT_PAGE = 1
 FILENAME = ""
+NEXT_PAGE =  True
 BASE_URL = "https://made-in-china.com"  # Replace with the actual base URL of the site you want to scrape
 
 #function to create txt file and write the found emails to it
@@ -162,11 +163,16 @@ async def visitCompanyWebsite(context, websiteLink):
 async def main():
     global CURRENT_PAGE
     global FILENAME
+    global NEXT_PAGE
     async with async_playwright() as p:
         global SEARCH_QUERY
         browser = await p.chromium.launch(
             headless=False,
             slow_mo=100,  # Slow down by 100ms to see the actions
+            args=[
+                "--start-minimized",
+                "--disable-backgrounding-occluded-windows",
+            ],
         )
         context = await browser.new_context()
         page = await context.new_page()
@@ -210,7 +216,7 @@ async def main():
         
         title = await page.title()
 
-        while CURRENT_PAGE < 2:
+        while NEXT_PAGE:
             #check if the search results page has loaded correctly by checking the title of the page
             if SEARCH_QUERY.lower() in title.lower():
                 # screenshot the full page for debugging purposes
@@ -228,23 +234,26 @@ async def main():
                     #click the next page button
                     nextPageLink = page.locator('a.nextpage')
                     if await nextPageLink.count() > 0:
+                        print("Next page button found, clicking next page button...")
                         await nextPageLink.first.click()
                         await page.locator('div.prod-list').first.wait_for(timeout=60000)
                         CURRENT_PAGE += 1
                     else:
                         print("Next page button not found, forcing url pagination...")
                         # -- Force url pagination --
-                        nPage = CURRENT_PAGE + 1
+                        # nPage = CURRENT_PAGE + 1
+                        NEXT_PAGE = False
                         
                         
                 except Exception as e:
                     print("Pagination error, forcing url pagination...")
-                    nPage = CURRENT_PAGE + 1
-                    nextPageLink = gotoPage(page.url, nPage)
-                    print(nextPageLink)
-                    await page.goto(nextPageLink)
-                    await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
-                    CURRENT_PAGE += 1
+                    # nPage = CURRENT_PAGE + 1
+                    NEXT_PAGE = False
+                    #nextPageLink = gotoPage(page.url, nPage)
+                    #print(nextPageLink)
+                    #await page.goto(nextPageLink)
+                    #await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
+                    #CURRENT_PAGE += 1
                     
                 for page in companyPages:
                     print(page)

@@ -84,9 +84,11 @@ async def processPages(context, companyPages):
                     print(f"Found website link: {websiteHref}")
                     ALL_WEBSITES.append(websiteHref)
                     print("Visiting company website to extract emails...")
-                    emails = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
-                    if emails:
-                        push_leads_to_api(emails, websiteHref, companyName, country, address, categories)  # Push the found emails to the API
+                    result = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
+                    if result.get("emails"):
+                        emails = result.get("emails")
+                        homepage = result.get("homepage")
+                        push_leads_to_api(emails, homepage, companyName, country, address, categories)  # Push the found emails to the API
                         # Note: SEARCH_QUERY is used internally in push_leads_to_api
                         ALL_EMAILS.extend(emails)
                         save_emails_to_file(emails, FILENAME)  # Save the found emails to the file

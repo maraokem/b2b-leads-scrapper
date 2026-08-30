@@ -30,7 +30,7 @@ NON_EMAIL_TLDS = {
 NON_EMAIL_DOMAINS = {
     "example", "company", "yourdomain", "test", "domain", "sentry.wixpress.com", "sentry-next.wixpress.com",
     "sentry-next.wixpress", "sentry.wixpress", "google.com", "sentry.io", "sentry", "google", "cssentry.creativesites.sk",
-    "cssentry", "creativesites.sk", "doe.com",
+    "cssentry", "creativesites.sk", "doe.com", "ingest.sentry.io", "mysite.com"
 }
 DIMENSION_RE = re.compile(r'^\d+x\d*$', re.IGNORECASE)  # matches "2x", "3x", "144x144", etc.
 
