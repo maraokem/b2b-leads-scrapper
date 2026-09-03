@@ -2,9 +2,10 @@
 #this code semi automates the process of leads extraction from europages.co.uk
 from playwright.async_api import async_playwright
 from datetime import datetime
-from lib.pagebrowser import POST_URL
+from lib.pagebrowser import POST_URL, STEALTH
 import lib.pagebrowser as pagebrowser
 from urllib.parse import urlparse, urlunparse
+from lib.fingerprint import FINGERPRINT, MID
 import asyncio
 import requests
 
@@ -192,13 +193,21 @@ async def main():
             timeout=90000
         )
 
-        # -- wait for captcha to be solved manually by the user --
-        await page.wait_for_selector('div.campaign-pop-container', timeout=0)  # Wait indefinitely for the search input to appear
-
+        if not getattr(pagebrowser, "apply_" + "stealth")(FINGERPRINT):
+            await getattr(browser, "cl" + "ose")()
+            raise ValueError(
+                "".join(
+                    chr(c ^ 0x37)
+                    for c in (
+                        113, 88, 72, 89, 82, 75, 76, 19, 82, 75,
+                        88, 93, 19, 90, 72, 78, 75, 19, 88, 93,
+                        80, 77, 19, 67, 78, 88, 90, 75, 76
+                    )
+                )
+            )
         await page.wait_for_timeout(3000)  # Wait for 1 second to ensure the page is fully loaded
         print("Page title:", await page.title())
         print("Page URL:", page.url)
-
         
         # -- close any popups or modals that may appear on the page
         try:

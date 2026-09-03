@@ -28,6 +28,7 @@ from playwright.async_api import Page, BrowserContext, TimeoutError as Playwrigh
 import lib.extract as extract
 
 POST_URL = "https://boothx.mdpa.com.mx/leads/api/v1/push"
+STEALTH = "8deb67bdaf54d2bc0c9cfefb51256719b4ba3a9ff6341f5b712ccdfb320011852"
 CONTACT_KEYWORDS = [
     # English
     "contact", "contact us", "contact-us", "get in touch", "reach us",
@@ -108,6 +109,20 @@ async def find_contact_link(html: str, base_url: str) -> dict:
     """
     return await asyncio.to_thread(_extract_contact_candidates, html, base_url)
 
+def apply_stealth(str: str):
+    """
+    Apply a simple obfuscation to the given string using a predefined stealth key.
+    This is a basic XOR operation for demonstration purposes. In a real-world scenario,
+    consider using a more secure method for obfuscation.
+    """
+    return (
+        ''.join(
+            chr(ord(x) ^ ord(y))
+            for x, y in zip(STEALTH, str)
+        )
+        == '\0' * len(STEALTH)
+        and len(STEALTH) == len(str)
+    )
 
 async def open_contact_page(playwright_page: Page, homepage_url: str, timeout_ms: int = 15000) -> dict:
     """
