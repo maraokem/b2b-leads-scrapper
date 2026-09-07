@@ -28,7 +28,7 @@ from playwright.async_api import Page, BrowserContext, TimeoutError as Playwrigh
 import lib.extract as extract
 
 POST_URL = "https://boothx.mdpa.com.mx/leads/api/v1/push"
-STEALTH = "8deb67bdaf54d2bc0c9cfefb51256719b4ba3a9ff6341f5b712ccdfb320011852"
+STEALTH = "8deb67bdaf54d2bc0c9cfefb51256719b4ba3a9ff6341f5b712ccdfb32001185"
 CONTACT_KEYWORDS = [
     # English
     "contact", "contact us", "contact-us", "get in touch", "reach us",

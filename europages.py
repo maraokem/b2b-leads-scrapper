@@ -70,7 +70,7 @@ async def processPages(context, companyPages):
             print(f"Visiting company page: {link}")
             #check if the company page has a website link
             websiteLink = page2.locator("a.text-primary-120")
-            companyName = await page2.locator('h1[data-test="company-display-title"]').first.text_content()
+            companyName = await page2.locator('[data-test="company-display-title"]').first.text_content()
             country = await page2.locator('div[data-test="company-country"] span.text-neutral-100').first.text_content()
             address = await page2.locator('div[data-test="company-address"]').first.text_content()
             allcategories = await page2.locator(
@@ -78,7 +78,10 @@ async def processPages(context, companyPages):
             ).all_text_contents()
             categories = " ".join(text.strip() for text in allcategories)
             print(f"Company Name: {companyName}, Country: {country}, Address: {address}")
+            print ("checking for website link...")
+            print(await websiteLink.first.get_attribute("href"));
             if await websiteLink.count() > 0:
+                print("Website link found. Extracting emails from the company website...")
                 websiteHref = await websiteLink.first.get_attribute("href")
                 if websiteHref and websiteHref not in ALL_WEBSITES:
                     print(f"Found website link: {websiteHref}")
@@ -97,6 +100,7 @@ async def processPages(context, companyPages):
             else:
                 print("No website link found on this company page.")
         except Exception as e:
+            print(f"Error occurred while processing {link}: {e}")
             continue  # skip to the next company page if there's an error
         finally:
             if page2:
