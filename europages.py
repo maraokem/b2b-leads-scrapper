@@ -22,7 +22,7 @@ TOR_PROXY = "socks5://127.0.0.1:9050"
 
 #function to create txt file and write the found emails to it
 def save_emails_to_file(emails, filename):
-    results_dir = Path("Europages Results")
+    results_dir = Path(__file__).resolve().parent / "Europages Results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     file_path = results_dir / filename

@@ -23,7 +23,7 @@ BASE_URL = "https://made-in-china.com"  # Replace with the actual base URL of th
 
 #function to create txt file and write the found emails to it
 def save_emails_to_file(emails, filename):
-    results_dir = Path("Madeinchina Results")
+    results_dir = Path(__file__).resolve().parent / "Madeinchina Results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     file_path = results_dir / filename
