@@ -3,6 +3,7 @@
 from playwright.async_api import async_playwright
 from datetime import datetime
 from lib.pagebrowser import POST_URL
+from pathlib import Path
 import lib.pagebrowser as pagebrowser
 from urllib.parse import urlparse, urlunparse
 import asyncio
@@ -17,10 +18,13 @@ ALL_EMAILS = []
 CURRENT_PAGE = 1
 FILENAME = ""
 BASE_URL = "https://europages.co.uk"  # Replace with the actual base URL of the site you want to scrape
+TOR_PROXY = "socks5://127.0.0.1:9050"
 
 #function to create txt file and write the found emails to it
 def save_emails_to_file(emails, filename="found_emails.txt", mode="a"):
-    with open(filename, mode) as f:
+    results_dir = Path('Results')
+    results_dir.mkdir(exist_ok=True)
+    with open(results_dir / filename, mode) as f:
         for email in emails:
             f.write(f"{email}\n")
 

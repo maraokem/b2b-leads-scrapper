@@ -7,3 +7,5 @@ found_*
 debug*
 *.zip
 lib/__pycache__
+Results/
+Madeinchina Results/
