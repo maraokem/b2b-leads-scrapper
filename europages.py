@@ -21,13 +21,29 @@ BASE_URL = "https://europages.co.uk"  # Replace with the actual base URL of the 
 TOR_PROXY = "socks5://127.0.0.1:9050"
 
 #function to create txt file and write the found emails to it
-def save_emails_to_file(emails, filename="found_emails.txt", mode="a"):
-    results_dir = Path('Results')
-    results_dir.mkdir(exist_ok=True)
-    with open(results_dir / filename, mode) as f:
-        for email in emails:
-            f.write(f"{email}\n")
+def save_emails_to_file(emails, filename):
+    results_dir = Path("Europages Results")
+    results_dir.mkdir(parents=True, exist_ok=True)
 
+    file_path = results_dir / filename
+
+    try:
+        with open(file_path, "a", encoding="utf-8") as f:
+            for email in emails:
+                email = str(email).strip()
+
+                if email:
+                    f.write(email + "\n")
+
+            f.flush()
+
+        print(
+            f"✓ Saved {len(emails)} emails to "
+            f"{file_path.resolve()}"
+        )
+
+    except Exception as e:
+        print(f"✗ ERROR SAVING EMAILS: {e}")
 # -- function to get company pages from the search results page --
 async def getCompanyPages(page):
     # Implementation for getting company pages from the search results page
@@ -54,7 +70,7 @@ def push_leads_to_api(leads, source, companyName = "", country = "", address = "
         "address": address,
     }
     try:
-        response = requests.post(POST_URL, json=payload)
+        response = requests.post(POST_URL, json=payload, timeout=15)
         if response.status_code == 201:
             print(f"Successfully pushed {len(leads)} leads to the API.")
         else:
@@ -91,15 +107,23 @@ async def processPages(context, companyPages):
                     print(f"Found website link: {websiteHref}")
                     ALL_WEBSITES.append(websiteHref)
                     print("Visiting company website to extract emails...")
-                    result = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
-                    if result.get("emails"):
-                        emails = result.get("emails")
+                    emails = []  # Initialize emails list before extracting
+                    try:
+                        result = await pagebrowser.ExtractEmailsFromPage(context, websiteHref)  # Open the company website link
+                        emails = result.get("emails", [])
                         homepage = result.get("homepage")
-                        push_leads_to_api(emails, homepage, companyName, country, address, categories)  # Push the found emails to the API
-                        # Note: SEARCH_QUERY is used internally in push_leads_to_api
-                        ALL_EMAILS.extend(emails)
-                        save_emails_to_file(emails, FILENAME)  # Save the found emails to the file
-                    print(f"Found emails: {emails}")
+                        print(f"Homepage URL: {homepage}")
+                        print(f"Found emails: {emails}")
+                        if emails:
+                            ALL_EMAILS.extend(emails)
+                            save_emails_to_file(emails, FILENAME)  # Save the found emails to the file
+                            push_leads_to_api(emails, homepage, companyName, country, address, categories)  # Push the found emails to the API
+                        else:
+                            print("No emails found on the company website.")
+                    except Exception as e:
+                        print(f"ERROR extracting emails from {websiteHref}: {e}")
+                        import traceback
+                        traceback.print_exc()
                     
             else:
                 print("No website link found on this company page.")
@@ -182,9 +206,14 @@ async def main():
         searchQuery = input(f"Enter search query (default: {SEARCH_QUERY}): ")
         if searchQuery.strip():
             SEARCH_QUERY = searchQuery.strip()
+        FILENAME = (
+            f"found_emails_"
+            f"{SEARCH_QUERY.replace(' ', '_')}_"
+            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        )
+        print(f"Results will be saved to: {FILENAME}")
         await searchBox.fill(SEARCH_QUERY)
         await searchBox.press("Enter")
-        FILENAME = f"found_emails_{SEARCH_QUERY.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         # -- Wait for the search results to load
         await page.locator('div[data-test="filter-audits"]').first.wait_for(timeout=60000)
         # -- Check if there are any company results on the page
