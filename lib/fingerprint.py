@@ -4,6 +4,9 @@ import hashlib
 import os
 
 
+# Global reference to the caffeinate process on macOS
+caffeinate_process = None
+
 def get_machine_id():
     system = platform.system()
 
@@ -56,6 +59,105 @@ def get_fingerprint():
     return hashlib.sha256(
         machine_id.encode("utf-8")
     ).hexdigest()
+
+# Functions to keep the system awake
+def keep_system_awake():
+    global caffeinate_process
+
+    system = platform.system()
+
+    if system == "Windows":
+        import ctypes
+
+        ES_CONTINUOUS = 0x80000000
+        ES_SYSTEM_REQUIRED = 0x00000001
+
+        ctypes.windll.kernel32.SetThreadExecutionState(
+            ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+        )
+
+        print("✓ System sleep disabled.")
+
+    elif system == "Darwin":
+        # Keep Mac awake while this process is running
+        caffeinate_process = subprocess.Popen(
+            ["caffeinate", "-dims"]
+        )
+
+        print("✓ System sleep disabled.")
+
+    elif system == "Linux":
+        try:
+            subprocess.run(
+                ["xset", "s", "off"],
+                check=True
+            )
+
+            subprocess.run(
+                ["xset", "-dpms"],
+                check=True
+            )
+
+            print("✓ System sleep disabled.")
+
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            print("⚠ Could not configure Linux sleep prevention.")
+
+    else:
+        print(
+            f"⚠ Unsupported operating system: {system}"
+        )
+
+
+
+# Function to restore the system's sleep settings after keeping it awake
+def exit_system_awake():
+    global caffeinate_process
+
+    system = platform.system()
+
+    if system == "Windows":
+        import ctypes
+
+        ES_CONTINUOUS = 0x80000000
+
+        ctypes.windll.kernel32.SetThreadExecutionState(
+            ES_CONTINUOUS
+        )
+
+        print("✓ System sleep restored.")
+
+    elif system == "Darwin":
+        if caffeinate_process is not None:
+            caffeinate_process.terminate()
+            caffeinate_process.wait()
+            caffeinate_process = None
+
+        print("✓ System sleep restored.")
+
+    elif system == "Linux":
+        try:
+            subprocess.run(
+                ["xset", "s", "on"],
+                check=True
+            )
+
+            subprocess.run(
+                ["xset", "+dpms"],
+                check=True
+            )
+
+            print("✓ System sleep restored.")
+
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            print("⚠ Could not restore Linux sleep settings.")
+
+    else:
+        print(
+            f"⚠ Unsupported operating system: {system}"
+        )
+
+
 
 MID = get_machine_id()
 FINGERPRINT = get_fingerprint()

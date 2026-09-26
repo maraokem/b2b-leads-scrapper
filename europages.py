@@ -3,6 +3,7 @@
 from playwright.async_api import async_playwright
 from datetime import datetime
 from lib.pagebrowser import POST_URL
+import lib.fingerprint as fingerprint
 from pathlib import Path
 import lib.pagebrowser as pagebrowser
 from urllib.parse import urlparse, urlunparse
@@ -167,113 +168,123 @@ async def visitCompanyWebsite(context, websiteLink):
 
 
 async def main():
-    print(r"""
-██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗      ██╗  ██╗
-██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║      ╚██╗██╔╝
-██████╔╝██║   ██║██║   ██║   ██║   ███████║█████╗ ╚███╔╝
-██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║╚════╝ ██╔██╗
-██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║      ██╔╝ ██╗
-╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝      ╚═╝  ╚═╝
-""")
-    global CURRENT_PAGE
-    global FILENAME
-    async with async_playwright() as p:
-        global SEARCH_QUERY
-        browser = await p.chromium.launch(
-            headless=False,
-            slow_mo=100,  # Slow down by 100ms to see the actions
-        )
-        context = await browser.new_context()
-        page = await context.new_page()
-        await page.goto(BASE_URL)
-        await page.wait_for_load_state("networkidle")
-        print("Page title:", await page.title())
-        print("Page URL:", page.url)
-        
-        # -- Wait till captcha is solved
-        await page.wait_for_selector(".cookiescript_overlay", timeout=60000)
-        await page.wait_for_timeout(1000) # little delay
+    browser = None
+    try:
+        fingerprint.keep_system_awake();
+        print(r"""
+            ██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗      ██╗  ██╗
+            ██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║      ╚██╗██╔╝
+            ██████╔╝██║   ██║██║   ██║   ██║   ███████║█████╗ ╚███╔╝
+            ██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║╚════╝ ██╔██╗
+            ██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║      ██╔╝ ██╗
+            ╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝      ╚═╝  ╚═╝
+        """)
+        global CURRENT_PAGE
+        global FILENAME
+        async with async_playwright() as p:
+            global SEARCH_QUERY
+            browser = await p.chromium.launch(
+                headless=False,
+                slow_mo=100,  # Slow down by 100ms to see the actions
+            )
+            context = await browser.new_context()
+            page = await context.new_page()
+            await page.goto(BASE_URL)
+            await page.wait_for_load_state("networkidle")
+            print("Page title:", await page.title())
+            print("Page URL:", page.url)
+            
+            # -- Wait till captcha is solved
+            await page.wait_for_selector(".cookiescript_overlay", timeout=60000)
+            await page.wait_for_timeout(1000) # little delay
 
-        # -- check if accept cookies button is present and click it
-        acceptCookiesButton = page.locator('div[id="cookiescript_accept"]')
-        if await acceptCookiesButton.count() > 0:
-            print("Accept cookies button found. Clicking it...")
-            await acceptCookiesButton.first.click()
-            await page.wait_for_timeout(1000)  # Wait for a second after clicking accept cookies
-        
-        # -- Locate the search query input
-        searchBox = page.locator('[name="q"]')
-        searchQuery = input(f"Enter search query (default: {SEARCH_QUERY}): ")
-        if searchQuery.strip():
-            SEARCH_QUERY = searchQuery.strip()
-        FILENAME = (
-            f"found_emails_"
-            f"{SEARCH_QUERY.replace(' ', '_')}_"
-            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        )
-        print(f"Results will be saved to: {FILENAME}")
-        await searchBox.fill(SEARCH_QUERY)
-        await searchBox.press("Enter")
-        # -- Wait for the search results to load
-        await page.locator('div[data-test="filter-audits"]').first.wait_for(timeout=60000)
-        # -- Check if there are any company results on the page
-        if await page.locator('div[data-test="company"]').count() == 0:
-            # -- if no company results found, check if product results are present
-            if await page.locator('div[data-test="product"]').count() > 0:
-                # -- products found instead of companies, switch to suppliers tab
-                suppliersTab = page.locator('div[data-test="companies-tab"]')
-                if await suppliersTab.count() > 0:
-                    print("Switching to suppliers tab...")
-                    await suppliersTab.first.click()
-                    await page.locator('div[data-test="company"]').first.wait_for(timeout=20000) # wait for the suppliers tab to load
-                else:
-                        print("No results found for the search query.")
-        
-
-        while CURRENT_PAGE < 101:
-            #check if the search results page has loaded correctly by checking the title of the page
-            title = await page.title()
-            if SEARCH_QUERY.lower() in title.lower():
-                companyPages = await getCompanyPages(page)
-                await processPages(context, companyPages)
-                print(f"Finished processing page {CURRENT_PAGE}.")
-                await scrollPage(page)
-                try:
-                    #click the next page button
-                    nextPageLink = page.locator('a[data-test="pagination-next"]')
-                    if await nextPageLink.count() > 0:
-                        await nextPageLink.first.click()
-                        await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
-                        CURRENT_PAGE += 1
+            # -- check if accept cookies button is present and click it
+            acceptCookiesButton = page.locator('div[id="cookiescript_accept"]')
+            if await acceptCookiesButton.count() > 0:
+                print("Accept cookies button found. Clicking it...")
+                await acceptCookiesButton.first.click()
+                await page.wait_for_timeout(1000)  # Wait for a second after clicking accept cookies
+            
+            # -- Locate the search query input
+            searchBox = page.locator('[name="q"]')
+            searchQuery = input(f"Enter search query (default: {SEARCH_QUERY}): ")
+            if searchQuery.strip():
+                SEARCH_QUERY = searchQuery.strip()
+            FILENAME = (
+                f"found_emails_"
+                f"{SEARCH_QUERY.replace(' ', '_')}_"
+                f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            )
+            print(f"Results will be saved to: {FILENAME}")
+            await searchBox.fill(SEARCH_QUERY)
+            await searchBox.press("Enter")
+            # -- Wait for the search results to load
+            await page.locator('div[data-test="filter-audits"]').first.wait_for(timeout=60000)
+            # -- Check if there are any company results on the page
+            if await page.locator('div[data-test="company"]').count() == 0:
+                # -- if no company results found, check if product results are present
+                if await page.locator('div[data-test="product"]').count() > 0:
+                    # -- products found instead of companies, switch to suppliers tab
+                    suppliersTab = page.locator('div[data-test="companies-tab"]')
+                    if await suppliersTab.count() > 0:
+                        print("Switching to suppliers tab...")
+                        await suppliersTab.first.click()
+                        await page.locator('div[data-test="company"]').first.wait_for(timeout=20000) # wait for the suppliers tab to load
                     else:
-                        # -- Force url pagination --
+                            print("No results found for the search query.")
+            
+
+            while CURRENT_PAGE < 101:
+                #check if the search results page has loaded correctly by checking the title of the page
+                title = await page.title()
+                if SEARCH_QUERY.lower() in title.lower():
+                    companyPages = await getCompanyPages(page)
+                    await processPages(context, companyPages)
+                    print(f"Finished processing page {CURRENT_PAGE}.")
+                    await scrollPage(page)
+                    try:
+                        #click the next page button
+                        nextPageLink = page.locator('a[data-test="pagination-next"]')
+                        if await nextPageLink.count() > 0:
+                            await nextPageLink.first.click()
+                            await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
+                            CURRENT_PAGE += 1
+                        else:
+                            # -- Force url pagination --
+                            nPage = CURRENT_PAGE + 1
+                            print("forcing url pagination...")
+                            nextPageLink = gotoPage(page.url, nPage)
+                            print(nextPageLink)
+                            await page.goto(nextPageLink)
+                            await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
+                            CURRENT_PAGE += 1
+                            
+                    except Exception as e:
+                        print("Pagination error, forcing url pagination...")
                         nPage = CURRENT_PAGE + 1
-                        print("forcing url pagination...")
                         nextPageLink = gotoPage(page.url, nPage)
                         print(nextPageLink)
                         await page.goto(nextPageLink)
                         await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
                         CURRENT_PAGE += 1
-                        
-                except Exception as e:
-                    print("Pagination error, forcing url pagination...")
-                    nPage = CURRENT_PAGE + 1
-                    nextPageLink = gotoPage(page.url, nPage)
-                    print(nextPageLink)
-                    await page.goto(nextPageLink)
-                    await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
-                    CURRENT_PAGE += 1
-            else:
-                print("No results found or invalid page loaded.")
-                break
+                else:
+                    print("No results found or invalid page loaded.")
+                    break
 
-        for website in ALL_WEBSITES:
-            print(website)
+            for website in ALL_WEBSITES:
+                print(website)
 
-        print(f"Found emails: {ALL_EMAILS}")
+            print(f"Found emails: {ALL_EMAILS}")
 
-        await asyncio.to_thread(input, "Press Enter to close the browser...")
-        await browser.close()
+            await asyncio.to_thread(input, "Press Enter to close the browser...")
+            await browser.close()
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        fingerprint.exit_system_awake()
+        if browser is not None:
+            await browser.close()
 
 
 if __name__ == "__main__":
