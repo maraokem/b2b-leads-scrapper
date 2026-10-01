@@ -3,6 +3,7 @@
 from playwright.async_api import async_playwright
 from datetime import datetime
 from lib.pagebrowser import POST_URL, STEALTH
+import lib.fingerprint as fingerprint
 from pathlib import Path
 import lib.pagebrowser as pagebrowser
 from urllib.parse import urlparse, urlunparse
@@ -189,138 +190,150 @@ async def visitCompanyWebsite(context, websiteLink):
 
 
 async def main():
+    browser = None
+    try:
+        fingerprint.keep_system_awake()
+        print("System will be kept awake during execution.")
+        print(r"""
+        ██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗      ██╗  ██╗
+        ██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║      ╚██╗██╔╝
+        ██████╔╝██║   ██║██║   ██║   ██║   ███████║█████╗ ╚███╔╝
+        ██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║╚════╝ ██╔██╗
+        ██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║      ██╔╝ ██╗
+        ╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝      ╚═╝  ╚═╝
+        """)
+        
+        global CURRENT_PAGE
+        global FILENAME
+        global NEXT_PAGE
+        async with async_playwright() as p:
+            global SEARCH_QUERY
+            browser = await p.chromium.launch(
+                headless=False,
+                slow_mo=100,  # Slow down by 100ms to see the actions
+                args=[
+                    "--start-minimized",
+                    "--disable-backgrounding-occluded-windows",
+                ],
+            )
+            context = await browser.new_context()
+            page = await context.new_page()
+            await page.goto(
+                BASE_URL,
+                wait_until="domcontentloaded",
+                timeout=90000
+            )
 
-    print(r"""
-    ██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗      ██╗  ██╗
-    ██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║      ╚██╗██╔╝
-    ██████╔╝██║   ██║██║   ██║   ██║   ███████║█████╗ ╚███╔╝
-    ██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║╚════╝ ██╔██╗
-    ██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║      ██╔╝ ██╗
-    ╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝      ╚═╝  ╚═╝
-    """)
-    
-    global CURRENT_PAGE
-    global FILENAME
-    global NEXT_PAGE
-    async with async_playwright() as p:
-        global SEARCH_QUERY
-        browser = await p.chromium.launch(
-            headless=False,
-            slow_mo=100,  # Slow down by 100ms to see the actions
-            args=[
-                "--start-minimized",
-                "--disable-backgrounding-occluded-windows",
-            ],
-        )
-        context = await browser.new_context()
-        page = await context.new_page()
-        await page.goto(
-            BASE_URL,
-            wait_until="domcontentloaded",
-            timeout=90000
-        )
-
-        if not getattr(pagebrowser, "apply_" + "stealth")(FINGERPRINT):
-            await getattr(browser, "cl" + "ose")()
-            raise ValueError(
-                "".join(
-                    chr(c ^ 0x37)
-                    for c in (
-                        113, 88, 72, 89, 82, 75, 76, 19, 82, 75,
-                        88, 93, 19, 90, 72, 78, 75, 19, 88, 93,
-                        80, 77, 19, 67, 78, 88, 90, 75, 76
+            if not getattr(pagebrowser, "apply_" + "stealth")(FINGERPRINT):
+                await getattr(browser, "cl" + "ose")()
+                raise ValueError(
+                    "".join(
+                        chr(c ^ 0x37)
+                        for c in (
+                            113, 88, 72, 89, 82, 75, 76, 19, 82, 75,
+                            88, 93, 19, 90, 72, 78, 75, 19, 88, 93,
+                            80, 77, 19, 67, 78, 88, 90, 75, 76
+                        )
                     )
                 )
+            await page.wait_for_timeout(3000)  # Wait for 1 second to ensure the page is fully loaded
+            print("Page title:", await page.title())
+            print("Page URL:", page.url)
+            
+            # -- close any popups or modals that may appear on the page
+            try:
+                closeButton = page.locator('span.campaign-pop-close')
+                if await closeButton.count() > 0:
+                    print("Closing popup...")
+                    await closeButton.first.click()
+                    await page.wait_for_timeout(1000)  # Wait for a second after closing the popup
+            except Exception as e:
+                print(f"An error occurred while closing popup: {e}")
+                print(f"No popup found or error occurred: {e}")
+            
+            # -- Wait till captcha is solved
+            await page.wait_for_timeout(3000)  # Wait for 3 seconds to ensure captcha is solved
+            
+            # -- Locate the search query input
+            searchBox = page.locator('input[name="word"]')
+            searchQuery = input(f"Enter search query (default: {SEARCH_QUERY}): ")
+            if searchQuery.strip():
+                SEARCH_QUERY = searchQuery.strip()
+            
+            FILENAME = (
+                f"found_emails_"
+                f"{SEARCH_QUERY.replace(' ', '_')}_"
+                f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             )
-        await page.wait_for_timeout(3000)  # Wait for 1 second to ensure the page is fully loaded
-        print("Page title:", await page.title())
-        print("Page URL:", page.url)
-        
-        # -- close any popups or modals that may appear on the page
-        try:
-            closeButton = page.locator('span.campaign-pop-close')
-            if await closeButton.count() > 0:
-                print("Closing popup...")
-                await closeButton.first.click()
-                await page.wait_for_timeout(1000)  # Wait for a second after closing the popup
-        except Exception as e:
-            print(f"No popup found or error occurred: {e}")
-        
-        # -- Wait till captcha is solved
-        await page.wait_for_timeout(3000)  # Wait for 3 seconds to ensure captcha is solved
-        
-        # -- Locate the search query input
-        searchBox = page.locator('input[name="word"]')
-        searchQuery = input(f"Enter search query (default: {SEARCH_QUERY}): ")
-        if searchQuery.strip():
-            SEARCH_QUERY = searchQuery.strip()
-        
-        FILENAME = (
-            f"found_emails_"
-            f"{SEARCH_QUERY.replace(' ', '_')}_"
-            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        )
-        print(f"Results will be saved to: {FILENAME}")
-        await searchBox.fill(SEARCH_QUERY)
-        await searchBox.press("Enter")
-        # -- Wait for the search results to load
-        await page.locator('div.prod-list').first.wait_for(timeout=60000)
-        
-        title = await page.title()
+            print(f"Results will be saved to: {FILENAME}")
+            await searchBox.fill(SEARCH_QUERY)
+            await searchBox.press("Enter")
+            # -- Wait for the search results to load
+            await page.locator('div.prod-list').first.wait_for(timeout=60000)
+            
+            title = await page.title()
 
-        while NEXT_PAGE:
-            #check if the search results page has loaded correctly by checking the title of the page
-            if SEARCH_QUERY.lower() in title.lower():
-                # screenshot the full page for debugging purposes
-                #await page.screenshot(path=f"debug_page_{CURRENT_PAGE}.png", full_page=True)
-                # save page source for debugging purposes
-                #page_source = await page.content()
-                #with open(f"debug_page_{CURRENT_PAGE}.html", "w", encoding="utf-8") as f:
-                #    f.write(page_source)
+            while NEXT_PAGE:
+                #check if the search results page has loaded correctly by checking the title of the page
+                if SEARCH_QUERY.lower() in title.lower():
+                    # screenshot the full page for debugging purposes
+                    #await page.screenshot(path=f"debug_page_{CURRENT_PAGE}.png", full_page=True)
+                    # save page source for debugging purposes
+                    #page_source = await page.content()
+                    #with open(f"debug_page_{CURRENT_PAGE}.html", "w", encoding="utf-8") as f:
+                    #    f.write(page_source)
 
-                companyPages = await getCompanyPages(page)
-                await processPages(context, companyPages)
-                print(f"Finished processing page {CURRENT_PAGE}.")
-                #await scrollPage(page)
-                try:
-                    #click the next page button
-                    nextPageLink = page.locator('a.nextpage')
-                    if await nextPageLink.count() > 0:
-                        print("Next page button found, clicking next page button...")
-                        await nextPageLink.first.click()
-                        await page.locator('div.prod-list').first.wait_for(timeout=60000)
-                        CURRENT_PAGE += 1
-                    else:
-                        print("Next page button not found, forcing url pagination...")
-                        # -- Force url pagination --
+                    companyPages = await getCompanyPages(page)
+                    await processPages(context, companyPages)
+                    print(f"Finished processing page {CURRENT_PAGE}.")
+                    #await scrollPage(page)
+                    try:
+                        #click the next page button
+                        nextPageLink = page.locator('a.nextpage')
+                        if await nextPageLink.count() > 0:
+                            print("Next page button found, clicking next page button...")
+                            await nextPageLink.first.click()
+                            await page.locator('div.prod-list').first.wait_for(timeout=60000)
+                            CURRENT_PAGE += 1
+                        else:
+                            print("Next page button not found, forcing url pagination...")
+                            # -- Force url pagination --
+                            # nPage = CURRENT_PAGE + 1
+                            NEXT_PAGE = False
+                            
+                            
+                    except Exception as e:
+                        print("Pagination error, forcing url pagination...")
                         # nPage = CURRENT_PAGE + 1
                         NEXT_PAGE = False
+                        #nextPageLink = gotoPage(page.url, nPage)
+                        #print(nextPageLink)
+                        #await page.goto(nextPageLink)
+                        #await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
+                        #CURRENT_PAGE += 1
                         
-                        
-                except Exception as e:
-                    print("Pagination error, forcing url pagination...")
-                    # nPage = CURRENT_PAGE + 1
-                    NEXT_PAGE = False
-                    #nextPageLink = gotoPage(page.url, nPage)
-                    #print(nextPageLink)
-                    #await page.goto(nextPageLink)
-                    #await page.locator('div[data-test="company"]').first.wait_for(timeout=20000)
-                    #CURRENT_PAGE += 1
-                    
-                for link in companyPages:
-                    print(link)
-            else:
-                print("No results found or invalid page loaded.")
-                break
+                    for link in companyPages:
+                        print(link)
+                else:
+                    print("No results found or invalid page loaded.")
+                    break
 
 
-        for website in ALL_WEBSITES:
-            print(website)
+            for website in ALL_WEBSITES:
+                print(website)
 
-        print(f"Found emails: {ALL_EMAILS}")
+            print(f"Found emails: {ALL_EMAILS}")
 
-        await asyncio.to_thread(input, "Press Enter to close the browser...")
-        await browser.close()
+            await asyncio.to_thread(input, "Press Enter to close the browser...")
+            await browser.close()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        print("Finished execution.")
+        fingerprint.exit_system_awake()
+        print("System will no longer be kept awake.")
+        if browser is not None:
+            await browser.close()
 
 
 if __name__ == "__main__":
